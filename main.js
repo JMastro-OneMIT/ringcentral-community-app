@@ -14,6 +14,9 @@ const {
 const ProgressBar = require('electron-progressbar');
 const isMac = process.platform === 'darwin'
 
+// Start hidden to tray when launched with --tray
+const startTrayOnly = process.argv.includes('--tray');
+
 const singleInstanceLock = app.requestSingleInstanceLock();
 const webAppUrl = 'https://app.ringcentral.com';
 
@@ -50,29 +53,30 @@ function isValidSchemeUri(url) {
 function createTray(iconPath) {
   tray = new Tray(iconPath);
   const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Show App', click: () => {
-        openMainWindow();
-      }
-    },
-    {
-      label: 'About', click: () => {
-        showAboutDialog();
-      }
-    },
+    { label: 'Show App', click: () => openMainWindow() },
+    { label: 'About', click: () => showAboutDialog() },
     { type: 'separator' },
     { role: 'resetZoom' },
     { role: 'zoomIn' },
     { role: 'zoomOut' },
     { type: 'separator' },
-    {
-      label: 'Quit', click: () => {
-        app.quit();
-      }
-    },
+    { label: 'Quit', click: () => { app.quit(); } },
   ]);
   tray.setToolTip('RingCentral Community App');
   tray.setContextMenu(contextMenu);
+
+  // Single-click: toggle. If visible → minimize; if hidden/minimized → show.
+  tray.on('click', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
+      mainWindow.minimize();
+      return;
+    }
+    openMainWindow(); // restores if minimized, shows if hidden
+  });
+
+  // Double-click: always bring it up
+  tray.on('double-click', () => openMainWindow());
 }
 
 function getUserAgent(sess, noElectron = false) {
@@ -120,13 +124,19 @@ function createMainWindow() {
     minWidth: 500,
     minHeight: 500,
     webPreferences,
-    show: true,
+    show: !startTrayOnly,          // hide initially if --tray
     title: 'RingCentral (Community)',
     icon: iconPath,
+    skipTaskbar: !!startTrayOnly,  // keep out of taskbar when hidden
   });
   if (process.env.DEBUG == 1) {
     mainWindow.webContents.openDevTools();
   }
+
+  if (!tray) {
+    createTray(iconPath);
+  }
+
   mainWindow.loadURL(webAppUrl);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (
@@ -266,6 +276,17 @@ function createMainWindow() {
     callback({ responseHeaders: details.responseHeaders })
   });
 
+  // keep taskbar state in sync with visibility
+  mainWindow.on('show', () => mainWindow.setSkipTaskbar(false));
+  mainWindow.on('hide', () => mainWindow.setSkipTaskbar(true));
+
+  // If starting to tray, ensure no flash to screen when ready
+  if (startTrayOnly) {
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.hide();            // remain hidden in tray
+    });
+  }
+
   if (!tray) {
     createTray(iconPath);
   }
@@ -289,6 +310,7 @@ function openMainWindow() {
   if (!mainWindow) {
     return;
   }
+  mainWindow.setSkipTaskbar(false); // ensure it appears on taskbar when shown
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
