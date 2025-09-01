@@ -1,4 +1,4 @@
-# RingCentral (Community) app
+# RingCentral (Community) app with Tray and Icon features
 
 This app is built based on RingCentral web app `https://app.ringcentral.com` and `Electron.js`. 
 It aims to build a community version of [RingCentral desktop app](https://www.ringcentral.com/apps/rc-app) for Linux, and work for other OS.
@@ -9,7 +9,7 @@ It aims to build a community version of [RingCentral desktop app](https://www.ri
 
 > Only Tested at Ubuntu and Fedora now
 
-For Linux, download installer files (deb, AppImage and rpm) [here](https://github.com/ringcentral/ringcentral-community-app/releases).
+For Linux, download installer files (deb, AppImage) [here](https://github.com/ringcentral/ringcentral-community-app/releases).  I have not built for RPM package manager but can if demand is there.
 
 
 ```bash
