@@ -1,5 +1,7 @@
 # RingCentral (Community) app with Tray and Icon features
 
+Added syntax for --tray on .AppImage that causes main window not to appear on launch.  Additionally added feature so if click on tray icon and there's no main window, it will open a main window.  Clicking tray icon again while main window open, minimizes to tray.
+
 This app is built based on RingCentral web app `https://app.ringcentral.com` and `Electron.js`. 
 It aims to build a community version of [RingCentral desktop app](https://www.ringcentral.com/apps/rc-app) for Linux, and work for other OS.
 
